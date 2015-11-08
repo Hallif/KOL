@@ -1043,7 +1043,7 @@ begin
     P := Screen2Client( P );
     MouseData.X := P.x;
     MouseData.Y := P.y;
-    EV^.fOnMouseDblClk(@Self, MouseData);
+    EV{$IFDEF EVENTS_DYNAMIC}^{$ENDIF}.fOnMouseDblClk(@Self, MouseData);
   end;
 end;
 
@@ -1563,17 +1563,20 @@ end;
 
 procedure TOleCtl.KeyDown(var Key: Longint; AShift: DWORD);
 begin
-  if Assigned(EV.fOnKeyDown) then EV.fOnKeyDown(@Self, Key, AShift);
+	if Assigned(EV{$IFDEF EVENTS_DYNAMIC}^{$ENDIF}.fOnKeyDown)
+	then EV{$IFDEF EVENTS_DYNAMIC}^{$ENDIF}.fOnKeyDown(@Self, Key, AShift);
 end;
 
 procedure TOleCtl.KeyPress(var Key: KOLChar);
 begin
-  if Assigned(EV.fOnChar) then EV.fOnChar(@Self, Key, 0);
+	if Assigned(EV{$IFDEF EVENTS_DYNAMIC}^{$ENDIF}.fOnChar)
+	then EV{$IFDEF EVENTS_DYNAMIC}^{$ENDIF}.fOnChar(@Self, Key, 0);
 end;
 
 procedure TOleCtl.KeyUp(var Key: Longint; AShift: DWORD);
 begin
-  if Assigned(EV.fOnKeyUp) then EV.fOnKeyUp(@Self, Key, AShift);
+	if Assigned(EV{$IFDEF EVENTS_DYNAMIC}^{$ENDIF}.fOnKeyUp)
+	then EV{$IFDEF EVENTS_DYNAMIC}^{$ENDIF}.fOnKeyUp(@Self, Key, AShift);
 end;
 
 procedure TOleCtl.MouseDown(Button: TMouseButton; AShift: DWORD; X, Y: Integer);
@@ -1657,7 +1660,7 @@ end;
 
 (*procedure TOleCtl.SetMouseDblClk(const Value: TOnMouse);
 begin
-  {$IFDEF EVENTS_DYNAMIC} ProvideUniqueEvents {$ELSE} EV {$ENDIF}
+  {$IFDEF EVENTS_DYNAMIC} ProvideUniqueEvents^ {$ELSE} EV {$ENDIF}
   .fOnMouseDblClk := Value;
 end;*)
 
@@ -1716,7 +1719,7 @@ end;
 
 procedure TOleCtl.SetOnChar(const Value: TOnChar);
 begin
-  {$IFDEF EVENTS_DYNAMIC} ProvideUniqueEvents {$ELSE} EV {$ENDIF}
+  {$IFDEF EVENTS_DYNAMIC} ProvideUniqueEvents^ {$ELSE} EV {$ENDIF}
   .fOnChar := Value;
 end;
 
