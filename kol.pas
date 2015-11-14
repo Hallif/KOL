@@ -41,7 +41,7 @@
 {$IFDEF FPC}
 {$define PAS_ONLY}
 {$mode delphi}
-//{$MODE objfpc}{$define OBJFPC}{$H+}
+//{$MODE objfpc}{$define OBJFPC}{$H+}{$define EVENTS_STATIC}
 {$ENDIF}//tmp internal def
 
 {$IFDEF x64}
@@ -4311,7 +4311,7 @@ type
 
   TOnLVSubitemDraw = function( Sender: PControl; DC: HDC; Dummy {always 0 !}: DWORD;
                   ItemIdx, SubItemIdx: Integer; const Rect: TRect;
-                  ItemState: TDrawState; var TextColor, BackColor: TColor ): Boolean
+                  ItemState: TDrawState; var TextColor, BackColor: TColor ): {$IFDEF FPC}DWORD{$ELSE}Boolean{$ENDIF}
                   of object;
   {* Event type for OnLVSubitemDraw event. }
 
@@ -8002,8 +8002,8 @@ type
        |<br>
        See also NM_CUSTOMDRAW in API Help.
     }
-    property OnLVSubitemDraw: TOnLVSubitemDraw
-             read Get_OnLVSubitemDraw
+    property OnLVSubitemDraw: TOnLVSubItemDraw
+             read {$IFDEF EVENTS_DYNAMIC} Get_OnLVSubitemDraw {$ELSE} EV.fOnLVCustomDraw {$ENDIF}
              write SetOnLVSubitemDraw;
 
     procedure Set_LVItemHeight(Value: Integer);
@@ -34464,10 +34464,10 @@ begin
                  {$ENDIF}
                  begin
                     {$IFDEF USE_FLAGS}
-                        if   NMhdr^.code = NM_RCLICK then
+                        if{$IFDEF FPC}integer{$ENDIF}(NMhdr^.code) = NM_RCLICK then
                              include( self_^.fFlagsG6, G6_RightClick )
                         else exclude( self_^.fFlagsG6, G6_RightClick );
-                    {$ELSE} self_^.fRightClick := NMhdr^.code=NM_RCLICK; {$ENDIF}
+                    {$ELSE} self_^.fRightClick := {$IFDEF FPC}integer{$ENDIF}(NMhdr^.code)=NM_RCLICK; {$ENDIF}
                     self_^.EV{$IFDEF EVENTS_DYNAMIC}^{$ENDIF}.fOnClick( Self_ );
                  end;
       NM_KILLFOCUS: {$IFDEF NIL_EVENTS}
@@ -34517,12 +34517,12 @@ begin
 end;
 {$ENDIF PAS_VERSION}
 
-{$IFDEF ASM_VERSION}{$ELSE PAS_VERSION} //Pascal
+{$IFDEF ASM_VERSION}{$ELSE PAS_VERSION}
 procedure ApplyImageLists2ListView( Sender: PControl );
 var Flags: DWORD;
 begin
   Flags := MakeFlags( @Sender^.DF.fLVOptions, ListViewFlags );
-  Sender^.Style := Sender^.Style and not $403F//$4FFC
+  Sender^.Style := Sender^.Style and not $403F{  $4FFC}
                   or Flags or ListViewStyles[ Sender^.DF.fLVStyle ];
   Flags := MakeFlags( @Sender^.DF.fLVOptions, ListViewExFlags );
   Sender^.Perform( LVM_SETEXTENDEDLISTVIEWSTYLE, $3FFF, Flags );
@@ -34756,7 +34756,7 @@ begin
     WM_NOTIFY:
       begin
         Hdr := Pointer( Msg.lParam );
-        case Hdr^.code of
+        case{$IFDEF FPC}integer{$ENDIF}(Hdr^.code)of
         TCN_SELCHANGING:
           self_^.fCurIndex := self_^.GetCurIndex;
         TCN_SELCHANGE:
@@ -36729,13 +36729,13 @@ begin
    SClassName := SubClassName;
    StrCopy( Params.WinClsNamBuf, @ SClassName[ 1 ] );
    {$ELSE}
-   {$IFNDEF UNICODE_CTRLS}
+     {$IFNDEF UNICODE_CTRLS}
    StrCopy( Params.WinClsNamBuf, @ SubClassName[ 1 ] );
-   {$ELSE}
+     {$ELSE}
    TempOleStr := StringToOleStr(AnsiString(SubClassName));
    lstrcpyW(Params.WinClsNamBuf, TempOleStr); // vampir_infernal 15.10.2008
    SysFreeString( TempOleStr );
-   {$ENDIF}
+     {$ENDIF}
    {$ENDIF}
    Params.Param := nil;
    Params.Inst := hInstance;
@@ -38390,10 +38390,10 @@ end;
 {$ENDIF WIN_GDI}
 
 {$IFDEF GDI}
-{$IFDEF ASM_VERSION}{$ELSE PAS_VERSION} //Pascal
+{$IFDEF ASM_VERSION}{$ELSE PAS_VERSION}
 function TControl.ClientRect: TRect;
-const BorderParams: array[ 0..5 ] of DWORD =
-      ( SM_CXBORDER, SM_CXFRAME, SM_CXSIZEFRAME, SM_CYBORDER, SM_CYFRAME, SM_CYSIZEFRAME );
+//const BorderParams: array[ 0..5 ] of DWORD =
+//      ( SM_CXBORDER, SM_CXFRAME, SM_CXSIZEFRAME, SM_CYBORDER, SM_CYFRAME, SM_CYSIZEFRAME );
 begin
    Result := fBoundsRect;
    GetWindowHandle;
@@ -47960,7 +47960,7 @@ begin
   if Msg.message = WM_NOTIFY then
   begin
     Notify := Pointer( Msg.lParam );
-    if Notify^.hdr.code = NM_CLICK then
+    if{$IFDEF FPC}integer{$ENDIF}(Notify^.hdr.code) = NM_CLICK then
     begin
       for I := TB^.DF.fTBevents^.fCount-1 downto 0 do
       begin
@@ -48377,7 +48377,7 @@ begin
   if Msg.message = WM_NOTIFY then
   begin
     CD := Pointer( Msg.lParam );
-    if CD^.nmcd.hdr.code = NM_CUSTOMDRAW then
+    if{$IFDEF FPC}integer{$ENDIF}(CD^.nmcd.hdr.code) = NM_CUSTOMDRAW then
     begin
       if  Assigned( Sender^.DF.fOnTBCustomDraw ) then
           Rslt := Sender^.DF.fOnTBCustomDraw( Sender, CD^ )
@@ -50307,8 +50307,8 @@ begin
           Inc(pb);
           if x + z <= Bmp^.Width then
           begin
-             d := MoveDataFun(@ PByteArray(
-                                {$IFDEF FPC}ptrUint{$ELSE}Integer{$ENDIF}( Bmp^.fDIBBits ) + Bmp^.fScanLineSize * y)
+             d := MoveDataFun(@ KOL.PByteArray(
+                                {$IFDEF FPC}ptrUint{$ELSE}Integer{$ENDIF}( Bmp^.fDIBBits ) + Bmp^.fScanLineSize * y){$IFDEF OBJFPC}^{$ENDIF}
                                 [x shr shr_x], pb, z, 1, x);
              inc(pb, d-1);
           end;
@@ -50320,8 +50320,8 @@ begin
       z:=pb^;
       Inc(pb);
       if x + z <= Bmp^.Width then
-        MoveDataFun(@ PByteArray(
-                      {$IFDEF FPC}ptrUint{$ELSE}Integer{$ENDIF}( Bmp^.fDIBBits ) + Bmp^.fScanLineSize * y)
+        MoveDataFun(@ KOL.PByteArray(
+                      {$IFDEF FPC}ptrUint{$ELSE}Integer{$ENDIF}( Bmp^.fDIBBits ) + Bmp^.fScanLineSize * y){$IFDEF OBJFPC}^{$ENDIF}
                       [x shr shr_x], pb, z, 0, x);
       Inc(x,z);
     end;
@@ -50806,7 +50806,7 @@ var BFH : TBitmapFileHeader;
            dec(maxBytes);
        end;
    end;
-   function CountSame2( P: PByteArray; maxPixels: Integer ): Integer;
+   function CountSame2( P: KOL.PByteArray; maxPixels: Integer ): Integer;
    var B1, B2: Byte;
        i: Integer;
    begin
@@ -50916,7 +50916,7 @@ var BFH : TBitmapFileHeader;
            end;
        end;
    end;
-   {procedure WriteRun2( P: PByteArray; cnt: Integer );
+   {procedure WriteRun2( P: KOL.PByteArray; cnt: Integer );
    var n, i, L: Integer;
    begin
        i := 0;
@@ -50956,7 +50956,7 @@ var BFH : TBitmapFileHeader;
            end;
        end;
    end;}
-   procedure WriteRun2( P: PByteArray; cnt: Integer );
+   procedure WriteRun2( P: KOL.PByteArray; cnt: Integer );
    var n, i, L: Integer;
    begin
        i := 0;
@@ -51139,7 +51139,7 @@ var BFH : TBitmapFileHeader;
        BIH: TBitmapInfoHeader;
        x, y: Integer;
        Line: PByte;
-       Buffer: PByteArray;
+       Buffer: KOL.PByteArray;
    begin
       Result := False;
       if Empty then Exit; {>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>}
@@ -57844,16 +57844,16 @@ begin
           SetWindowLong( fHandle, GWL_EXSTYLE, dw and not WS_EX_LAYERED );
   end;
 end;
-
 {$ENDIF WIN_GDI}
+
 function TControl.SetPosition( X, Y: Integer ): PControl;
 begin
   Left := X;
   Top := Y;
   Result := @Self;
 end;
-{$IFDEF WIN_GDI}
 
+{$IFDEF WIN_GDI}
 function NewColorDialog( FullOpen: TColorCustomOption ): PColorDialog;
 var I: Integer;
 begin
@@ -58027,7 +58027,7 @@ begin
     if Hdr^.hwndFrom = Sender^.Handle then
     begin
       LV := Pointer( Hdr );
-      if Hdr^.code = LVN_DELETEITEM then
+      if{$IFDEF FPC}integer{$ENDIF}(Hdr^.code) = LVN_DELETEITEM then
       begin
         {$IFDEF NIL_EVENTS}
         if  Assigned( Sender^.EV{$IFDEF EVENTS_DYNAMIC}^{$ENDIF}.fOnDeleteLVItem ) then
@@ -58036,7 +58036,7 @@ begin
         Result := TRUE;
       end
         else
-      if Hdr^.code = LVN_DELETEALLITEMS then
+      if{$IFDEF FPC}integer{$ENDIF}(Hdr^.code) = LVN_DELETEALLITEMS then
       begin
           if Assigned( Sender^.DF.fOnDeleteAllLVItems ) then
           begin
@@ -58078,9 +58078,9 @@ begin
     Hdr := Pointer(Msg.lParam);
     if Hdr^.hwndFrom = Sender^.Handle then
     begin
-      if (Hdr^.code = LVN_GETDISPINFO)
+      if ({$IFDEF FPC}integer{$ENDIF}(Hdr^.code) = LVN_GETDISPINFO)
          {$IFDEF UNICODE_CTRLS}
-         or (Hdr^.code = LVN_GETDISPINFOW)
+         or ({$IFDEF FPC}integer{$ENDIF}(Hdr^.code) = LVN_GETDISPINFOW)
          {$ENDIF UNICODE_CTRLS}
       then
       begin
@@ -58133,7 +58133,7 @@ begin
   if Msg.message = WM_NOTIFY then
   begin
     NMHdr := Pointer( Msg.lParam );
-    if (NMhdr^.code = NM_CUSTOMDRAW)
+    if ({$IFDEF FPC}integer{$ENDIF}(NMhdr^.code) = NM_CUSTOMDRAW)
     {$IFDEF NIL_EVENTS} and Assigned( Sender^.EV{$IFDEF EVENTS_DYNAMIC}^{$ENDIF}.fOnLVCustomDraw ) {$ENDIF}
     then
     begin
@@ -58187,7 +58187,7 @@ begin
   if Msg.message = WM_NOTIFY then
   begin
     NMHdr := Pointer( Msg.lParam );
-    if (NMhdr^.code = NM_CUSTOMDRAW)
+    if ({$IFDEF FPC}integer{$ENDIF}(NMhdr^.code) = NM_CUSTOMDRAW)
     {$IFDEF NIL_EVENTS} and Assigned( Sender^.EV{$IFDEF EVENTS_DYNAMIC}^{$ENDIF}.fOnLVCustomDraw ) {$ENDIF}
     then
     begin
@@ -58297,7 +58297,7 @@ begin
     if Hdr^.hwndFrom = Sender^.Handle then
     begin
       LV := Pointer( Hdr );
-      if Hdr^.code = LVN_COLUMNCLICK then
+      if{$IFDEF FPC}integer{$ENDIF}(Hdr^.code) = LVN_COLUMNCLICK then
       begin
         {$IFDEF NIL_EVENTS}
         if  Assigned( Sender^.EV{$IFDEF EVENTS_DYNAMIC}^{$ENDIF}.fOnColumnClick ) then
@@ -58324,7 +58324,7 @@ begin
   begin
     NMOD := Pointer( Msg.lParam );
     NMLV := Pointer( Msg.lParam );
-    if NMOD^.hdr.code = LVN_ODSTATECHANGED then
+    if{$IFDEF FPC}integer{$ENDIF}(NMOD^.hdr.code) = LVN_ODSTATECHANGED then
     begin
       {$IFDEF NIL_EVENTS}
       if  Assigned( Sender^.EV{$IFDEF EVENTS_DYNAMIC}^{$ENDIF}.fOnLVStateChange ) then
@@ -58333,7 +58333,7 @@ begin
                                       NMOD^.uOldState, NMOD^.uNewState );
     end
       else
-    if NMLV^.hdr.code = LVN_ITEMCHANGED then
+    if{$IFDEF FPC}integer{$ENDIF}(NMLV^.hdr.code) = LVN_ITEMCHANGED then
     begin
       {$IFDEF NIL_EVENTS}
       if  Assigned( Sender^.EV{$IFDEF EVENTS_DYNAMIC}^{$ENDIF}.fOnLVStateChange ) then
