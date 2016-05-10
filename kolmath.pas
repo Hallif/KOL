@@ -329,7 +329,7 @@ function count_1_bits_in_dword( x: Integer ): Integer;
 implementation
 
 {$IFNDEF _D2orD3}
-uses SysConst;
+//uses SysConst;
 {$ENDIF}
 
 function EAbs( D: Double ): Double;
@@ -946,15 +946,6 @@ begin
       Result := Data[I];
 end;
 
-{$IFDEF ASM_VERSION}
-function Min(A,B: Integer): Integer;
-asm
-  CMP EAX, EDX
-  JL  @@1
-  XCHG EAX, EDX
-@@1:
-end;
-{$ELSE}
 function Min(A,B: Integer): Integer;
 begin
   if A < B then
@@ -962,7 +953,6 @@ begin
   else
     Result := B;
 end;
-{$ENDIF}
 
 {$IFDEF _D4orHigher}
 function Min(A,B: I64): I64;
@@ -1026,15 +1016,6 @@ begin
       Result := Data[I];
 end;
 
-{$IFDEF ASM_VERSION}
-function Max(A,B: Integer): Integer;
-asm
-  CMP EAX, EDX
-  JG  @@1
-  XCHG EAX, EDX
-@@1:
-end;
-{$ELSE}
 function Max(A,B: Integer): Integer;
 begin
   if A > B then
@@ -1042,7 +1023,6 @@ begin
   else
     Result := B;
 end;
-{$ENDIF}
 
 {$IFDEF _D4orHigher}
 function Max(A,B: I64): I64;
@@ -1187,24 +1167,19 @@ asm  // IN: EAX = ptr to Data, EDX = High(Data) = Count - 1
       DD @@4
 @@4:
       ADD  EAX, [ECX+12+EDX]
-      JO   @@RaiseOverflowError
+      JO   RaiseOverflowError
 @@3:
       ADD  EAX, [ECX+8+EDX]
-      JO   @@RaiseOverflowError
+      JO   RaiseOverflowError
 @@2:
       ADD  EAX, [ECX+4+EDX]
-      JO   @@RaiseOverflowError
+      JO   RaiseOverflowError
 @@1:
       ADD  EAX, [ECX+EDX]
-      JO   @@RaiseOverflowError
+      JO   RaiseOverflowError
       SUB  EDX,16
       JNS  @@4
       POP  EBX
-      RET
-@@RaiseOverflowError:
-      POP EBX
-      POP ECX
-      JMP RaiseOverflowError
 end;
 
 procedure RaiseOverflowError;
@@ -1590,9 +1565,9 @@ begin
   if (Rate <= -1.0)
     or (Period < 1) or (Period > NPeriods) then ArgError('InterestPayment');
   {$ENDIF}
-  Crp:=Compound(Rate,Period-1);
-  Arn:=Annuity2(Rate,Nperiods,PaymentTime,Crn);
-  InterestPayment:=(FutureValue*(Crp-1)-PresentValue*(Crn-Crp))/Arn;
+	Crp:=Compound(Rate,Period-1);
+	Arn:=Annuity2(Rate,Nperiods,PaymentTime,Crn);
+	InterestPayment:=(FutureValue*(Crp-1)-PresentValue*(Crn-Crp))/Arn;
 end;
 
 function InterestRate(NPeriods: Integer;
