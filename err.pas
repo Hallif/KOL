@@ -254,6 +254,8 @@ function SafeLoadLibrary(const Filename: KOLString;
   ErrorMode: UINT = SEM_NOOPENFILEERRORBOX): HMODULE;
 {$ENDIF}
 
+function FmtLoadStr(Ident: Integer; const Args: array of const): KOLString;
+
 implementation
 
 function AllocMem(Size: Cardinal): Pointer;
