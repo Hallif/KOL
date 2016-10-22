@@ -12,6 +12,8 @@
 {.$include <netinet/in.h>}
 {.$include <unistd.h>}
 
+typedef ENetSocket = TSocket;
+
 {$define ENET_HOST_TO_NET_16:=htons} (**< macro that converts host to net byte-order of a 16-bit value *)
 {$define ENET_HOST_TO_NET_32:=htonl} (**< macro that converts host to net byte-order of a 32-bit value *)
 

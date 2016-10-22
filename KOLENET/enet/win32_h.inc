@@ -5,6 +5,8 @@
 {$ifndef __ENET_WIN32_H__}
 {$define __ENET_WIN32_H__}
 
+typedef ENetSocket = TSocket;
+
 {$define ENET_HOST_TO_NET_16:=htons}
 {$define ENET_HOST_TO_NET_32:=htonl}
 
