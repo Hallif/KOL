@@ -18,6 +18,7 @@ const
 	ENET_PROTOCOL_MAXIMUM_PEER_ID         = $FFF;
 	ENET_PROTOCOL_MAXIMUM_FRAGMENT_COUNT  = 1024*1024;
 
+typedef{enum}ENetProtocolCommand=enet_uint8;const
 	ENET_PROTOCOL_COMMAND_NONE               = 0;
 	ENET_PROTOCOL_COMMAND_ACKNOWLEDGE        = 1;
 	ENET_PROTOCOL_COMMAND_CONNECT            = 2;
@@ -146,8 +147,8 @@ typedef ENetProtocolSendFragment = ENET_PACKED struct
 		fragmentOffset:enet_uint32;
 	end;
 
-typedef ENetProtocol_PTR = ^ENetProtocol;ENetProtocol = ENET_PACKED record
-	case byte{ENetProtocolCommand}
+typedef ENetProtocol_PTR = ^ENetProtocol;ENetProtocol = ENET_PACKED
+	record case ENetProtocolCommand 
 	of	ENET_PROTOCOL_COMMAND_NONE					:(header:ENetProtocolCommandHeader)
 	;	ENET_PROTOCOL_COMMAND_ACKNOWLEDGE			:(acknowledge:ENetProtocolAcknowledge)
 	;	ENET_PROTOCOL_COMMAND_CONNECT				:(connect:ENetProtocolConnect)
