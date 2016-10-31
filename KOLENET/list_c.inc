@@ -54,8 +54,10 @@ begin;assert(list<>NIL);
 end;
 
 function
-enet_list_insert (position:ENetListIterator;data:pointer):
+enet_list_insert (position:ENetListIterator; data:pointer):
 ENetListIterator;
+var
+	result:ENetListIterator;
 begin;assert(position<>NIL);
 	ENetListIterator(result):=ENetListIterator(data);assert(result<>NIL);
 
@@ -108,11 +110,12 @@ var
 	size:size_t=0;
 begin;assert(list<>NIL);
 	position:=enet_list_begin (list);while
-	position<>enet_list_end (list)
+	position<>enet_list_end (list){$define continue_:=begin;
+	position:=enet_list_next (position);continue;end;}
 	do begin
-		inc(size)
+		size+=1
 		;
-	position:=enet_list_next (position)end
+	continue_{$undef continue_}end
 	;
 	return(size);
 end;
