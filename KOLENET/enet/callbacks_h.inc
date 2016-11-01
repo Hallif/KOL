@@ -7,7 +7,7 @@
 
 {.$include <stdlib.h>}
 
-typedef ENetCallbacks = struct
+typedef ENetCallbacks_PTR = ^ENetCallbacks;ENetCallbacks = struct
 		malloc:function(size:size_t):pointer; ENET_CALLBACK;
 		free:procedure(memory:pointer); ENET_CALLBACK;
 		no_memory:procedure(); ENET_CALLBACK;
